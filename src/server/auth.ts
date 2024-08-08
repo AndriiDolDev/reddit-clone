@@ -1,4 +1,5 @@
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
+import GoogleProvider from "next-auth/providers/google";
 import {
   getServerSession,
   type DefaultSession,
@@ -25,6 +26,8 @@ import {
 declare module "next-auth" {
   interface Session extends DefaultSession {
     user: {
+      likes: string[];
+      dislikes: string[];
       id: string;
       // ...other properties
       // role: UserRole;
@@ -49,6 +52,8 @@ export const authOptions: NextAuthOptions = {
       user: {
         ...session.user,
         id: user.id,
+        likes: [],
+        dislikes: [],
       },
     }),
   },
@@ -62,6 +67,10 @@ export const authOptions: NextAuthOptions = {
     DiscordProvider({
       clientId: env.DISCORD_CLIENT_ID,
       clientSecret: env.DISCORD_CLIENT_SECRET,
+    }),
+    GoogleProvider({
+      clientId: env.GOOGLE_CLIENT_ID,
+      clientSecret: env.GOOGLE_CLIENT_SECRET,
     }),
     /**
      * ...add more providers here.

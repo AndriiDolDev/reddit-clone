@@ -22,23 +22,49 @@ export const createTable = pgTableCreator((name) => `reddit-clone_${name}`);
 export const posts = createTable(
   "post",
   {
-    id: serial("id").primaryKey(),
+    id: varchar("post_id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
     name: varchar("name", { length: 256 }),
+    description: varchar("description", { length: 1024 }),
     createdById: varchar("created_by", { length: 255 })
       .notNull()
       .references(() => users.id),
+    userName: varchar("user_name").references(() => users.name),
+    userImage: varchar("user_image").references(() => users.image),
     createdAt: timestamp("created_at", { withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).$onUpdate(
-      () => new Date()
+      () => new Date(),
     ),
+    likeCount: integer("like").default(0),
   },
   (example) => ({
     createdByIdIdx: index("created_by_idx").on(example.createdById),
     nameIndex: index("name_idx").on(example.name),
-  })
+  }),
 );
+
+export const comments = createTable("comment", {
+  id: varchar("comment_id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  comment: varchar("comment", { length: 256 }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+  likeCount: integer("like").default(0),
+  createdBy: varchar("created_by", { length: 255 })
+    .notNull()
+    .references(() => users.id),
+  postId: varchar("post_id")
+    .references(() => posts.id)
+    .notNull(), // Link to post
+  parentId: varchar("parent_id").references(() => comments.id), // For nested comments
+  userName: varchar("user_name").references(() => users.name),
+  userImage: varchar("user_image").references(() => users.image),
+});
 
 export const users = createTable("user", {
   id: varchar("id", { length: 255 })
@@ -52,6 +78,8 @@ export const users = createTable("user", {
     withTimezone: true,
   }).default(sql`CURRENT_TIMESTAMP`),
   image: varchar("image", { length: 255 }),
+  likes: varchar("likes").array(),
+  dislikes: varchar("dislikes").array(),
 });
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -84,7 +112,7 @@ export const accounts = createTable(
       columns: [account.provider, account.providerAccountId],
     }),
     userIdIdx: index("account_user_id_idx").on(account.userId),
-  })
+  }),
 );
 
 export const accountsRelations = relations(accounts, ({ one }) => ({
@@ -107,7 +135,7 @@ export const sessions = createTable(
   },
   (session) => ({
     userIdIdx: index("session_user_id_idx").on(session.userId),
-  })
+  }),
 );
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({
@@ -126,5 +154,5 @@ export const verificationTokens = createTable(
   },
   (vt) => ({
     compoundKey: primaryKey({ columns: [vt.identifier, vt.token] }),
-  })
+  }),
 );

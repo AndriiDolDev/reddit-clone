@@ -34,7 +34,7 @@ const PostItem: FC<PostItemProps> = ({ postItem }) => {
             {formatTimeAgo(postItem.createdAt)}
           </h1>
         </div>
-        <h1 className="font-medium">{postItem.name}</h1>
+        <h1 className="font-medium mb-4">{postItem.name}</h1>
         <h1 className="text-sm text-gray-700">{postItem.description}</h1>
       </div>
     </div>

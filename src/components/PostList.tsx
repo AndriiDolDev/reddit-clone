@@ -55,15 +55,28 @@ const PostList: FC<PostListProps> = ({ session }) => {
               <Controller
                 control={control}
                 name="postName"
+                
                 render={({ field }) => {
-                  return <Input {...field} className="h-[20px]"></Input>;
+                  return (
+                    <Input
+                      {...field}
+                      className="Inter mb-4 h-[20px] border-0 tracking-wide"
+                      placeholder="Title of your post"
+                    ></Input>
+                  );
                 }}
               />
               <Controller
                 control={control}
                 name="postDescription"
                 render={({ field }) => {
-                  return <Input {...field} className="h-[20px]" />;
+                  return (
+                    <Input
+                      {...field}
+                      className="Inter h-[20px] border-0 tracking-wide"
+                      placeholder="Share your thoughts with the world!"
+                    />
+                  );
                 }}
               />
             </div>

@@ -206,7 +206,13 @@ const CommentItem: FC<CommentItemProps> = ({
                     control={control}
                     name="comment"
                     render={({ field }) => {
-                      return <Input {...field} className="h-[20px]"></Input>;
+                      return (
+                        <Input
+                          {...field}
+                          className="h-[20px]"
+                          placeholder="Comment your thoughts"
+                        ></Input>
+                      );
                     }}
                   />
                 </div>

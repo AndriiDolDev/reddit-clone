@@ -22,59 +22,63 @@ const CommentList: FC<CommentListProps> = ({ session, postId }) => {
   const [postData, setPostData] = useState<any>(null);
   const [userLikes, setUserLikes] = useState<any>(null);
 
-  const { mutate } = api.post.createComment.useMutation({
-    // onSuccess: () => {
-    //   fetchComments();
-    //   fetchPostData();
-    // },
+  const [toggle, setToggle] = useState(false);
+
+  const { mutate: createComment } = api.post.createComment.useMutation({
+    onSuccess: () => {
+      fetchComments();
+      fetchPostData();
+      fetchUserLikes();
+    },
   });
 
   const { mutate: setLike } = api.post.setLike.useMutation({
-    // onSuccess: () => {
-    //   fetchComments();
-    //   fetchPostData();
-    //   fetchUserLikes();
-    // },
+    onSuccess: () => {
+      fetchComments();
+      fetchPostData();
+      fetchUserLikes();
+    },
   });
 
   const { mutate: setDislike } = api.post.setDislike.useMutation({
-    // onSuccess: () => {
-    //   fetchComments();
-    //   fetchPostData();
-    //   fetchUserLikes();
-    // },
+    onSuccess: () => {
+      fetchComments();
+      fetchPostData();
+      fetchUserLikes();
+    },
   });
 
-  const { data, refetch: refetchPost } = api.post.getPostById.useQuery({
-    postId,
-  });
+  const { data: postDataFromQuery, refetch: refetchPost } =
+    api.post.getPostById.useQuery({ postId });
+  const { data: commentsDataFromQuery, refetch: refetchComments } =
+    api.post.getCommentsByPostId.useQuery({ postId });
+  const { data: userLikesData, refetch: refetchUserLikes } =
+    api.post.getLikes.useQuery({ userId: session.user.id });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      await fetchPostData();
+      await fetchComments();
+      await fetchUserLikes();
+    };
+    console.log(toggle);
+    fetchData();
+  }, [postId, session.user.id, userLikesData?.likes]);
+  console.log(commentsData);
   const fetchPostData = async () => {
     const data = await refetchPost();
     setPostData(data.data);
   };
 
-  const { data: commentsData1, refetch: refetchComments } =
-    api.post.getCommentsByPostId.useQuery({ postId });
   const fetchComments = async () => {
     const data = await refetchComments();
-    setCommentsData(data.data?.commentsData);
+    setCommentsData(data.data?.commentsData || []);
   };
 
-  const { data: userLikesData, refetch: refetchUserLikes } =
-    api.post.getLikes.useQuery({
-      userId: session.user.id,
-    });
   const fetchUserLikes = async () => {
     const data = await refetchUserLikes();
-    setUserLikes(data.data);
+    setUserLikes(data.data || {});
   };
-
-  console.log(1);
-  useEffect(() => {
-    fetchPostData();
-    fetchComments();
-    fetchUserLikes();
-  }, [fetchUserLikes, fetchPostData, fetchComments]);
 
   const { handleSubmit, control, reset } = useForm({
     defaultValues: {
@@ -83,8 +87,8 @@ const CommentList: FC<CommentListProps> = ({ session, postId }) => {
   });
 
   const onSubmit: SubmitHandler<{ comment: string }> = (formData) => {
-    mutate({
-      postId: postId,
+    createComment({
+      postId,
       comment: formData.comment,
       parentId: undefined,
     });
@@ -114,6 +118,7 @@ const CommentList: FC<CommentListProps> = ({ session, postId }) => {
                   onClick={(e) => {
                     e.stopPropagation();
                     setLike({ id: postId, userId: session.user.id });
+                    setToggle((prev) => !prev);
                   }}
                 />
               ) : (
@@ -124,6 +129,7 @@ const CommentList: FC<CommentListProps> = ({ session, postId }) => {
                   onClick={(e) => {
                     e.stopPropagation();
                     setLike({ id: postId, userId: session.user.id });
+                    setToggle((prev) => !prev);
                   }}
                 />
               )}
@@ -136,6 +142,7 @@ const CommentList: FC<CommentListProps> = ({ session, postId }) => {
                   onClick={(e) => {
                     e.stopPropagation();
                     setDislike({ id: postId, userId: session.user.id });
+                    setToggle((prev) => !prev);
                   }}
                 />
               ) : (
@@ -146,6 +153,7 @@ const CommentList: FC<CommentListProps> = ({ session, postId }) => {
                   onClick={(e) => {
                     e.stopPropagation();
                     setDislike({ id: postId, userId: session.user.id });
+                    setToggle((prev) => !prev);
                   }}
                 />
               )}
@@ -185,7 +193,13 @@ const CommentList: FC<CommentListProps> = ({ session, postId }) => {
                 control={control}
                 name="comment"
                 render={({ field }) => {
-                  return <Input {...field} className="h-[20px]"></Input>;
+                  return (
+                    <Input
+                      {...field}
+                      className="h-[20px]"
+                      placeholder="Comment your thoughts"
+                    ></Input>
+                  );
                 }}
               />
             </div>
@@ -201,18 +215,16 @@ const CommentList: FC<CommentListProps> = ({ session, postId }) => {
           </div>
         </div>
       )}
-      {commentsData && (
+      {commentsData.length > 0 && (
         <div className="space-y-6">
-          {commentsData.map((item, idx) => {
-            return (
-              <CommentItem
-                postItem={item}
-                key={idx}
-                session={session}
-                postId={postId}
-              />
-            );
-          })}
+          {commentsData.map((item, idx) => (
+            <CommentItem
+              postItem={item}
+              key={idx}
+              session={session}
+              postId={postId}
+            />
+          ))}
         </div>
       )}
     </div>

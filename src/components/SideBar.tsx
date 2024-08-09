@@ -14,7 +14,7 @@ const SideBar: FC<SideBarProps> = ({ session }) => {
       <div className="flex flex-col gap-1">
         <Button variant="outline">Home</Button>
         {session?.user ? (
-          <Button>My posts</Button>
+          <Button variant="outline">My posts</Button>
         ) : (
           <Button asChild>
             <Link href={"/auth"}>Log in</Link>

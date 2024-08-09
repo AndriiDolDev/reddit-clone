@@ -130,7 +130,7 @@ export const postRouter = createTRPCRouter({
           .where(eq(users.id, input.userId));
         await likeSet(-1);
       }
-
+      console.log("324234324232");
       return { success: true };
     }),
 
@@ -219,7 +219,7 @@ export const postRouter = createTRPCRouter({
       ).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
       const data = commentsList.filter((item) => item.parentId === null);
-
+      console.log(data);
       return { commentsData: data };
     }),
 

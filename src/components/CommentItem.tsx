@@ -22,11 +22,7 @@ const CommentItem: FC<CommentItemProps> = ({
   level = 0,
 }) => {
   const api = createTRPCReact<AppRouter>();
-  const { mutate } = api.post.createComment.useMutation({
-    onSuccess: () => {
-      handleOnClickComment();
-    },
-  });
+  const { mutate } = api.post.createComment.useMutation({});
 
   interface RenderCommentItemProps
     extends React.AllHTMLAttributes<HTMLDivElement> {

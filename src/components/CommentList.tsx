@@ -23,26 +23,26 @@ const CommentList: FC<CommentListProps> = ({ session, postId }) => {
   const [userLikes, setUserLikes] = useState<any>(null);
 
   const { mutate } = api.post.createComment.useMutation({
-    onSuccess: () => {
-      fetchComments();
-      fetchPostData();
-    },
+    // onSuccess: () => {
+    //   fetchComments();
+    //   fetchPostData();
+    // },
   });
 
   const { mutate: setLike } = api.post.setLike.useMutation({
-    onSuccess: () => {
-      fetchComments();
-      fetchPostData();
-      fetchUserLikes();
-    },
+    // onSuccess: () => {
+    //   fetchComments();
+    //   fetchPostData();
+    //   fetchUserLikes();
+    // },
   });
 
   const { mutate: setDislike } = api.post.setDislike.useMutation({
-    onSuccess: () => {
-      fetchComments();
-      fetchPostData();
-      fetchUserLikes();
-    },
+    // onSuccess: () => {
+    //   fetchComments();
+    //   fetchPostData();
+    //   fetchUserLikes();
+    // },
   });
 
   const { data, refetch: refetchPost } = api.post.getPostById.useQuery({
@@ -69,11 +69,12 @@ const CommentList: FC<CommentListProps> = ({ session, postId }) => {
     setUserLikes(data.data);
   };
 
+  console.log(1);
   useEffect(() => {
     fetchPostData();
     fetchComments();
     fetchUserLikes();
-  }, []);
+  }, [fetchUserLikes, fetchPostData, fetchComments]);
 
   const { handleSubmit, control, reset } = useForm({
     defaultValues: {

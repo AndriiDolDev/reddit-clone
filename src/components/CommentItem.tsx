@@ -7,12 +7,26 @@ import { Controller, useForm } from "react-hook-form";
 import { createTRPCReact } from "@trpc/react-query";
 import { AppRouter } from "@/server/api/root";
 import { Input } from "./ui/input";
+import { api } from "./CommentList";
 
 interface CommentItemProps {
   postItem: any;
   session: any;
   postId: string;
   level?: number;
+  createComment: any;
+  refetchComments: any;
+  submitComment: any;
+}
+
+interface RenderCommentItemProps
+  extends React.AllHTMLAttributes<HTMLDivElement> {
+  postItem: any;
+  session: any;
+  postId: string;
+  level: number;
+  refetchComments;
+  submitComment: any;
 }
 
 const CommentItem: FC<CommentItemProps> = ({
@@ -20,53 +34,45 @@ const CommentItem: FC<CommentItemProps> = ({
   session,
   postId,
   level = 0,
+  submitComment,
+  refetchComments,
 }) => {
-  const api = createTRPCReact<AppRouter>();
-  const { mutate } = api.post.createComment.useMutation({});
-
-  interface RenderCommentItemProps
-    extends React.AllHTMLAttributes<HTMLDivElement> {
-    postItem: any;
-    session: any;
-    postId: string;
-    level: number;
-  }
-
   const RenderCommentItem: FC<RenderCommentItemProps> = ({
     postItem,
     session,
     postId,
     level,
+    refetchComments,
+    submitComment,
     ...rest
   }) => {
     const [showReply, setShowReply] = useState<boolean>(false);
-    const [nestedComments, setNestedComments] = useState<any[]>([]);
-    const [isExpanded, setIsExpanded] = useState<boolean>(true);
-    const { mutate: setLike } = api.post.setLike.useMutation({
-      onSuccess: () => {
-        refetch();
-        refetchUserLiker();
-      },
-    });
-    const { mutate: setDislike } = api.post.setDislike.useMutation({
-      onSuccess: () => {
-        refetch();
-        refetchUserLiker();
-      },
-    });
     const { data: userLikes, refetch: refetchUserLiker } =
       api.post.getLikes.useQuery({
         userId: session.user.id,
       });
 
-    const { refetch } = api.post.getNestedCommentsByCommentId.useQuery({
+    const {
+      data: nestedComments,
+      isLoading,
+      refetch,
+    } = api.post.getNestedCommentsByCommentId.useQuery({
       commentId: postItem.id,
     });
 
-    const handleOnClickComment = useCallback(async () => {
-      const { data } = await refetch();
-      setNestedComments(data?.innerComments ?? []);
-    }, [refetch]);
+    const { mutate: setLike } = api.post.setLike.useMutation({
+      onSuccess: () => {
+        refetchUserLiker();
+        refetchComments();
+      },
+    });
+    const { mutate: setDislike } = api.post.setDislike.useMutation({
+      onSuccess: () => {
+        // refetch();
+        refetchUserLiker();
+        refetchComments();
+      },
+    });
 
     const { handleSubmit, control, reset } = useForm({
       defaultValues: {
@@ -74,27 +80,21 @@ const CommentItem: FC<CommentItemProps> = ({
       },
     });
 
-    const onSubmit = async (data: any) => {
-      await mutate({
-        postId: postItem.postId,
+    const createCommentMutation = api.post.createComment.useMutation({
+      onSuccess: () => {
+        refetch();
+      },
+    });
+
+    const onSubmit = (data: any) => {
+      createCommentMutation.mutate({
         comment: data.comment,
+        postId: postItem.postId,
         parentId: postItem.id,
       });
-
       reset();
+      setShowReply(false);
     };
-
-    useEffect(() => {
-      if (level === 0) {
-        if (isExpanded) {
-          handleOnClickComment();
-        } else {
-          setNestedComments([]);
-        }
-      } else {
-        handleOnClickComment();
-      }
-    }, [isExpanded, userLikes]);
 
     const calculateWidth = () => {
       const baseWidth = 700;
@@ -109,7 +109,6 @@ const CommentItem: FC<CommentItemProps> = ({
           style={{ minWidth: `${calculateWidth()}px` }}
           className={`self-center p-4 pb-6 ${level === 0 ? "border-b" : ""} ${rest.className}`}
           onClick={(e) => {
-            setIsExpanded((prev) => !prev);
             e.stopPropagation();
           }}
         >
@@ -228,17 +227,20 @@ const CommentItem: FC<CommentItemProps> = ({
               </div>
             </div>
           )}
-          {nestedComments.map((item, idx) => (
-            <RenderCommentItem
-              onClick={(e) => e.stopPropagation()}
-              key={`${item.id}-${idx}`}
-              postItem={item}
-              session={session}
-              postId={postId}
-              level={level + 1}
-              className="ml-[20px]"
-            />
-          ))}
+          {!isLoading &&
+            // nestedComments.innerComments > 0 &&
+            nestedComments.innerComments.map((item, idx) => (
+              <RenderCommentItem
+                onClick={(e) => e.stopPropagation()}
+                key={`${item.id}-${idx}`}
+                postItem={item}
+                session={session}
+                postId={postId}
+                level={level + 1}
+                className="ml-[20px]"
+                refetchComments={refetch}
+              />
+            ))}
         </div>
       </>
     );
@@ -250,6 +252,7 @@ const CommentItem: FC<CommentItemProps> = ({
       session={session}
       postId={postId}
       level={level}
+      refetchComments={refetchComments}
     />
   );
 };

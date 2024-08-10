@@ -6,12 +6,13 @@ import React, { FC } from "react";
 import PostItem from "./PostItem";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
+import { api } from "./CommentList";
 interface PostListProps {
   session: any;
 }
 
 const PostList: FC<PostListProps> = ({ session }) => {
-  const api = createTRPCReact<AppRouter>();
+  // const api = createTRPCReact<AppRouter>();
   const { mutate } = api.post.createPost.useMutation();
   const { data, refetch } = api.post.getAllPosts.useQuery();
 
@@ -55,7 +56,6 @@ const PostList: FC<PostListProps> = ({ session }) => {
               <Controller
                 control={control}
                 name="postName"
-                
                 render={({ field }) => {
                   return (
                     <Input
